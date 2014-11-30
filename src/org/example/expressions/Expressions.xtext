@@ -1,0 +1,45 @@
+grammar org.example.expressions.Expressions with org.eclipse.xtext.common.Terminals
+
+generate expressions "http://www.example.org/expressions/Expressions"
+
+ExpressionsModel:
+	elements+=AbstractElement*;
+
+AbstractElement:
+	Variable | Expression;
+
+Variable:
+	name=ID '=' expression=Expression;
+
+Expression:
+	PlusOrMinus;
+
+PlusOrMinus returns Expression:
+	MulOrDiv (({Plus.left=current} '+' | {Minus.left=current} '-')
+	right=MulOrDiv)*;
+
+MulOrDiv returns Expression:
+	Atomic (({MulOrDiv.left=current} op=('*' | '/'))
+	right=Atomic)*;
+
+Or returns Expression:
+	And ({Or.left=current} "||" right=And)*;
+
+And returns Expression:
+	Equality ({And.left=current} "&&" right=Equality)*;
+
+Equality returns Expression:
+	Comparison ({Equality.left=current} op=("==" | "!=")
+	right=Comparison)*;
+
+Comparison returns Expression:
+	PlusOrMinus ({Comparison.left=current} op=(">=" | "<=" | ">" | "<")
+	right=PlusOrMinus)*;
+
+Atomic returns Expression:
+	'(' Expression ')' |
+	{Not} "!" expression=Atomic |
+	{IntConstant} value=INT |
+	{StringConstant} value=STRING |
+	{BoolConstant} value=('true' | 'false') |
+	{VariableRef} variable=[Variable];
